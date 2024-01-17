@@ -6,8 +6,10 @@
 
 void login();
 void createAccount();
-void beCandidate();
+void beCandidate(char userName[255], char password[255]);
 void vote();
+void withdrawVote();
+void removeCandidate(char userName[255], char password[255]);
 
 int main(){
     int input;
@@ -68,15 +70,35 @@ void login(){
             vote();
         }
         else if(strncmp(userInput, "C", 1) == 0 || strncmp(userInput, "c", 1) == 0){
-            beCandidate();
+            beCandidate(userName, password);
         }
         else{
-            printf("\nI, as your voting system do not have time for wrong inputs");
+            printf("I, as your voting system do not have time for wrong inputs");
             exit(0);
         }
     }
-    else{
-        printf("There is nothing on your file!");
+    else if (strcmp(readFromFile1, "candidate") == 0) {
+        printf("If you would like to withdraw your candidateship, enter Y: ");
+        scanf("%c", userInput);
+        if(strncmp(userInput, "Y", 1) == 0 || strncmp(userInput, "y", 1) == 0){
+            removeCandidate(userName, password);
+        }
+        else{
+            printf("Why are you here then?");
+            exit(0);
+        }
+    }
+    else {
+        
+        printf("If you would like to withdraw your vote, enter Y: ");
+        scanf("%c", userInput);
+        if(strncmp(userInput, "Y", 1) == 0 || strncmp(userInput, "y", 1) == 0){
+            withdrawVote();
+        }
+        else{
+            printf("Why are you here then?");
+            exit(0);
+        }
     }
     fclose(pUser1);
 }
@@ -127,9 +149,55 @@ void createAccount(){
         fclose(pF);
     }
 }
-void beCandidate(){
+void beCandidate(char userName[255], char password[255]){
     printf("becoming canddiate\n");
+    FILE *pCand = fopen("candidate.txt", "a+"); //appends to the file if it exists or creates it if it doesnt
+    fprintf(pCand, "%s\n", userName); //adds username to list of candidates
+    fclose(pCand);
+    char fileName[255];
+    strcpy(fileName, userName);
+    strcat(fileName, ".txt"); //creates userName.txt
+    FILE *pUser = fopen(fileName, "w"); //rerwites file
+    fprintf(pUser, "%s\ncandidate", password);
+    fclose(pUser);
+    printf("\nYou have succesfully become a candidate!\n");
+    exit(0);
 }
 void vote(){
     printf("voting\n");
+    //add votes to each user file
+    //run through file of candidates and read amount of votes that each candidate has
+}
+void withdrawVote(){
+    printf("Redacting vote\n");
+}
+
+void removeCandidate(char userName[255], char password[255]){
+    printf("REMOVING CANDIDATE");
+    char fileName[255];
+    strcpy(fileName, userName);
+    strcat(fileName, ".txt"); //creates userName.txt
+    FILE *pUser = fopen(fileName, "w"); //rerwites file
+    fprintf(pUser, "%s\nno", password);
+    fclose(pUser);
+    char candidates[255][255]; //an array to store candidate names
+    FILE *pCandid = fopen("candidate.txt", "a+");
+    char candidateName[255];
+    int i = 0; 
+    while (fgets(candidateName, 255, pCandid)){
+        if(strncmp(candidateName, userName, strlen(userName)) != 0){ //if name on file is not user name
+            strcpy(candidateName, candidates[i]); //copy name on file to array
+            i++;
+        }
+    }
+    fclose(pCandid);
+    FILE *pCandida = fopen("candidate.txt", "w"); //overwrites the old candidate file
+    for(int j = 0; j < i; j++){
+        fprintf(pCandida,"%s\n", candidates[j]); //rewrites the candidate names
+    }
+    fclose(pCandid);
+    printf("\nYou have succesfully removed yourself from candidateship!\n");
+    exit(0);
+    //need to run through list of candidates, add them to array except for user and then create new candidate file with these stuff
+    //remove candidate status from user profile and 
 }
