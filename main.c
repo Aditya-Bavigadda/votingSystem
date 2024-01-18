@@ -186,16 +186,25 @@ void removeCandidate(char userName[255], char password[255]){
     int i = 0; 
     while (fgets(candidateName, 255, pCandid)){
         if(strncmp(candidateName, userName, strlen(userName)) != 0){ //if name on file is not user name
-            strcpy(candidateName, candidates[i]); //copy name on file to array
-            i++;
+            for(int k = 0; k < strlen(candidateName); k++){
+                strcpy(candidates[i], candidateName); //copy name on file to array
+            }
+            i++; //i is the amount of names
         }
     }
     fclose(pCandid);
+
     FILE *pCandida = fopen("candidate.txt", "w"); //overwrites the old candidate file
+    
     for(int j = 0; j < i; j++){
-        fprintf(pCandida,"%s\n", candidates[j]); //rewrites the candidate names
+       int m = 0;
+       while(isspace(candidates[j]) == 0){ //if it is not blank
+        fprintf(pCandida, "%s", candidates[j]);
+        printf("%s", candidates[j]);
+       }
+       fprintf(pCandida, "\n");
     }
-    fclose(pCandid);
+    fclose(pCandida);
     printf("\nYou have succesfully removed yourself from candidateship!\n");
     exit(0);
     //need to run through list of candidates, add them to array except for user and then create new candidate file with these stuff
