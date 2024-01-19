@@ -10,7 +10,7 @@ void beCandidate(char userName[255], char password[255]);
 void vote();
 void withdrawVote();
 void removeCandidate(char userName[255], char password[255]);
-
+void recreateCandidatelist(int i, char candidates[255][255]);
 int main(){
     int input;
     char throwaway;
@@ -173,7 +173,7 @@ void withdrawVote(){
 }
 
 void removeCandidate(char userName[255], char password[255]){
-    printf("REMOVING CANDIDATE");
+    printf("REMOVING CANDIDATE\n");
     char fileName[255];
     strcpy(fileName, userName);
     strcat(fileName, ".txt"); //creates userName.txt
@@ -193,20 +193,24 @@ void removeCandidate(char userName[255], char password[255]){
         }
     }
     fclose(pCandid);
+    candidates[i+1][0] = '\0'; //null termiantor
+    recreateCandidatelist(i, candidates);
+}
 
+void recreateCandidatelist(int i, char candidates[255][255]){
     FILE *pCandida = fopen("candidate.txt", "w"); //overwrites the old candidate file
-    
-    for(int j = 0; j < i; j++){
-       int m = 0;
-       while(isspace(candidates[j]) == 0){ //if it is not blank
+    // if (pCandida == NULL){ //wtf if i do this then segmentatoin error????
+    //      printf("Error!\n");
+    //      exit(0);
+    // }
+    int j = 0;
+       //while(isspace(candidates[j]) != 0){ //if it is not blank
+        while(strcmp(candidates[j], " ") != 0 && candidates[j][0] != '\0'){
         fprintf(pCandida, "%s", candidates[j]);
         printf("%s", candidates[j]);
+        j++;
        }
-       fprintf(pCandida, "\n");
-    }
     fclose(pCandida);
     printf("\nYou have succesfully removed yourself from candidateship!\n");
     exit(0);
-    //need to run through list of candidates, add them to array except for user and then create new candidate file with these stuff
-    //remove candidate status from user profile and 
 }
