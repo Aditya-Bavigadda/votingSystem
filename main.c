@@ -160,11 +160,57 @@ void beCandidate(char userName[255], char password[255]){
     FILE *pUser = fopen(fileName, "w"); //rerwites file
     fprintf(pUser, "%s\ncandidate", password);
     fclose(pUser);
+    FILE *pVo = fopen("vote.txt", "a+");
+    fprintf(pVo, "0\n"); //they have 0 votes
+    fclose(pVo);
     printf("\nYou have succesfully become a candidate!\n");
     exit(0);
 }
 void vote(){
-    printf("voting\n");
+    printf(".......VOTING SYSTEM LOADING.......\n");
+    printf("The current candidates are, with the amount of votes of: ");
+    FILE *pCandi = fopen("candidate.txt", "r"); //opens candidate file to read
+    FILE *pVote = fopen("vote.txt", "a+"); //creates votes file if it doesnt exist
+    int candidateNumber = 0;
+    char temp[255];
+    char throwaway;
+    char candidateNames[255][255]; //double array to store candidate names
+    int votes[255]; //array to store vote numbers
+    while(fgets(temp, 255, pCandi)){
+        candidateNumber++;
+    }
+    rewind(pCandi);
+    for(int i = 0; i < candidateNumber; i++){
+        fgets(candidateNames[i], 255, pCandi);
+        candidateNames[i][strlen(candidateNames[i])-1] = '\0'; //removes whitespace at end of name
+        fgets(temp, 255, pVote);
+        votes[i] = atoi(temp); //converts the string to an integer
+        if(i == candidateNumber - 1){
+            printf("%s, %d\n", candidateNames[i], votes[i]);
+        }
+        else{
+            printf("%s, %d || ", candidateNames[i], votes[i]); //prints out candidate names and their votes
+        }
+    }
+    scanf("%c", &throwaway); //input buffer
+    printf("Please enter the name of the candidate you would like to vote for: ");
+    int candidNumber = 0;
+    bool candidateExists = false;
+    while (candidateExists == false){
+        fgets(temp, 255, stdin);
+        temp[strlen(temp)-1] = '\0'; //removes whitespace
+        for(int j = 0; j < candidateNumber; j++){
+            if(strncmp(temp, candidateNames[j], strlen(temp)) == 0){
+                candidateExists = true;
+                candidNumber = j;
+            }
+        }
+    }
+    printf("VOTING FOR %s\n", candidateNames[candidNumber]);
+    fclose(pCandi);
+    fclose(pVote);
+    //create a vote file, which matches to the order of names and add it to an array
+    //e.g. user file: user1, user2    vote file: 1, 2
     //add votes to each user file
     //run through file of candidates and read amount of votes that each candidate has
 }
@@ -205,7 +251,7 @@ void recreateCandidatelist(int i, char candidates[255][255]){
     // }
     int j = 0;
        //while(isspace(candidates[j]) != 0){ //if it is not blank
-        while(strcmp(candidates[j], " ") != 0 && candidates[j][0] != '\0'){
+        while(strcmp(candidates[j], " ") != 0 && candidates[j][0] != '\0'){ //detects blankspace which solved a bunch of issues
         fprintf(pCandida, "%s", candidates[j]);
         printf("%s", candidates[j]);
         j++;
