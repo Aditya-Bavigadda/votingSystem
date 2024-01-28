@@ -11,6 +11,7 @@ void vote();
 void withdrawVote();
 void removeCandidate(char userName[255], char password[255]);
 void recreateCandidatelist(int i, char candidates[255][255]);
+void viewVotes();
 int main(){
     int input;
     char throwaway;
@@ -64,13 +65,16 @@ void login(){
         exit(0); //breaks function
     }
     if(strcmp(readFromFile1, "no") == 0){
-        printf("You have not voted for anybody, would you like to vote, enter V for vote or enter C if you would like to be a candidate: ");
+        printf("You have not voted for anybody, would you like to vote, enter V for vote or enter C if you would like to be a candidate or enter P if you would like to view the votes: ");
         scanf("%c", userInput);
         if(strncmp(userInput, "V", 1) == 0 || strncmp(userInput, "v", 1) == 0){
-            vote();
+            vote(userName, password);
         }
         else if(strncmp(userInput, "C", 1) == 0 || strncmp(userInput, "c", 1) == 0){
             beCandidate(userName, password);
+        }
+        else if(strncmp(userInput, "P", 1) == 0 || strncmp(userInput, "p", 1) == 0){
+            viewVotes();
         }
         else{
             printf("I, as your voting system do not have time for wrong inputs");
@@ -78,10 +82,13 @@ void login(){
         }
     }
     else if (strcmp(readFromFile1, "candidate") == 0) {
-        printf("If you would like to withdraw your candidateship, enter Y: ");
+        printf("If you would like to withdraw your candidateship, enter Y or if you would like to view the current standings, enter P: ");
         scanf("%c", userInput);
         if(strncmp(userInput, "Y", 1) == 0 || strncmp(userInput, "y", 1) == 0){
             removeCandidate(userName, password);
+        }
+        else if(strncmp(userInput, "P", 1) == 0 || strncmp(userInput, "p", 1) == 0){
+            viewVotes();
         }
         else{
             printf("Why are you here then?");
@@ -90,10 +97,13 @@ void login(){
     }
     else {
         
-        printf("If you would like to withdraw your vote, enter Y: ");
+        printf("If you would like to withdraw your vote, enter Y or if you would like to view the current standings, enter P: ");
         scanf("%c", userInput);
         if(strncmp(userInput, "Y", 1) == 0 || strncmp(userInput, "y", 1) == 0){
             withdrawVote();
+        }
+        else if(strncmp(userInput, "P", 1) == 0 || strncmp(userInput, "p", 1) == 0){
+            viewVotes();
         }
         else{
             printf("Why are you here then?");
@@ -166,7 +176,7 @@ void beCandidate(char userName[255], char password[255]){
     printf("\nYou have succesfully become a candidate!\n");
     exit(0);
 }
-void vote(){
+void vote(char userName[255], char password[255]){
     printf(".......VOTING SYSTEM LOADING.......\n");
     printf("The current candidates are, with the amount of votes of: ");
     FILE *pCandi = fopen("candidate.txt", "r"); //opens candidate file to read
@@ -193,22 +203,48 @@ void vote(){
         }
     }
     scanf("%c", &throwaway); //input buffer
-    printf("Please enter the name of the candidate you would like to vote for: ");
     int candidNumber = 0;
     bool candidateExists = false;
     while (candidateExists == false){
+        printf("Please enter the name of the candidate you would like to vote for: ");
         fgets(temp, 255, stdin);
         temp[strlen(temp)-1] = '\0'; //removes whitespace
         for(int j = 0; j < candidateNumber; j++){
-            if(strncmp(temp, candidateNames[j], strlen(temp)) == 0){
+            if(strncmp(temp, candidateNames[j], strlen(candidateNames[j])) == 0){
                 candidateExists = true;
                 candidNumber = j;
             }
         }
+        if(candidateExists == false){
+            printf("The candidate you voted for does not exist, try again!\n");
+        }
     }
     printf("VOTING FOR %s\n", candidateNames[candidNumber]);
-    fclose(pCandi);
+    rewind(pVote);
+    int voteStorage[255]; //to store votes
+    for(int i = 0; i < candidateNumber; i++){
+        fgets(temp, 255, pVote);
+        if (i != candidNumber){ //not candidate vote
+            voteStorage[i] = atoi(temp); //converts to int
+        }
+        else{
+            voteStorage[i] = atoi(temp) + 1;
+        }
+    }
     fclose(pVote);
+    FILE *pVoteFileAgain = fopen("vote.txt", "w"); //reopens file with the purpose of rewriting everything
+    for(int i = 0; i < candidateNumber; i++){
+        fprintf(pVoteFileAgain, "%d\n", voteStorage[i]);
+    }
+    fclose(pVoteFileAgain);
+    fclose(pCandi);
+     //need to add name of person voted onto user file so if they want to withdraw vote, it is easy to 
+    char fileName[255];
+    strcpy(fileName, userName);
+    strcat(fileName, ".txt"); //creates userName.txt
+    FILE *pUseragain = fopen(fileName, "w"); //rerwites file
+    fprintf(pUseragain, "%s\n%s", password, candidateNames[candidateNumber - 2]);
+    fclose(pUseragain);
     //create a vote file, which matches to the order of names and add it to an array
     //e.g. user file: user1, user2    vote file: 1, 2
     //add votes to each user file
@@ -259,4 +295,32 @@ void recreateCandidatelist(int i, char candidates[255][255]){
     fclose(pCandida);
     printf("\nYou have succesfully removed yourself from candidateship!\n");
     exit(0);
+}
+void viewVotes(){
+     printf("The current candidates are, with the amount of votes of: ");
+    FILE *pCanddi = fopen("candidate.txt", "r"); //opens candidate file to read
+    FILE *pVotte = fopen("vote.txt", "a+"); //creates votes file if it doesnt exist
+    int candidateNumber = 0;
+    char temp[255];
+    char throwaway;
+    char candidateNames[255][255]; //double array to store candidate names
+    int votes[255]; //array to store vote numbers
+    while(fgets(temp, 255, pCanddi)){
+        candidateNumber++;
+    }
+    rewind(pCanddi);
+    for(int i = 0; i < candidateNumber; i++){
+        fgets(candidateNames[i], 255, pCanddi);
+        candidateNames[i][strlen(candidateNames[i])-1] = '\0'; //removes whitespace at end of name
+        fgets(temp, 255, pVotte);
+        votes[i] = atoi(temp); //converts the string to an integer
+        if(i == candidateNumber - 1){
+            printf("%s, %d\n", candidateNames[i], votes[i]);
+        }
+        else{
+            printf("%s, %d || ", candidateNames[i], votes[i]); //prints out candidate names and their votes
+        }
+    }
+    fclose(pCanddi);
+    fclose(pVotte);
 }
