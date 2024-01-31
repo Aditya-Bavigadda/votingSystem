@@ -8,9 +8,9 @@ void login();
 void createAccount();
 void beCandidate(char userName[255], char password[255]);
 void vote();
-void withdrawVote();
+void withdrawVote(char userName[255], char password[255]);
 void removeCandidate(char userName[255], char password[255]);
-void recreateCandidatelist(int i, char candidates[255][255]);
+void recreateCandidatelist(int i, char candidates[255][255], int votes[255]);
 void viewVotes();
 int main(){
     int input;
@@ -100,7 +100,7 @@ void login(){
         printf("If you would like to withdraw your vote, enter Y or if you would like to view the current standings, enter P: ");
         scanf("%c", userInput);
         if(strncmp(userInput, "Y", 1) == 0 || strncmp(userInput, "y", 1) == 0){
-            withdrawVote();
+            withdrawVote(userName, password);
         }
         else if(strncmp(userInput, "P", 1) == 0 || strncmp(userInput, "p", 1) == 0){
             viewVotes();
@@ -243,15 +243,60 @@ void vote(char userName[255], char password[255]){
     strcpy(fileName, userName);
     strcat(fileName, ".txt"); //creates userName.txt
     FILE *pUseragain = fopen(fileName, "w"); //rerwites file
-    fprintf(pUseragain, "%s\n%s", password, candidateNames[candidateNumber - 2]);
+    fprintf(pUseragain, "%s\n%s", password, candidateNames[candidateNumber - 3]);
     fclose(pUseragain);
+    printf("You have succesfully voted!\n");
+    exit(0);
     //create a vote file, which matches to the order of names and add it to an array
     //e.g. user file: user1, user2    vote file: 1, 2
     //add votes to each user file
     //run through file of candidates and read amount of votes that each candidate has
 }
-void withdrawVote(){
+void withdrawVote(char userName[255], char password[255]){
     printf("Redacting vote\n");
+    char fileName[255];
+    strcpy(fileName, userName);
+    strcat(fileName, ".txt"); //creates userName.txt
+    FILE *pUserrr = fopen(fileName, "r"); //to read the file and determine who they voted for. 
+    char candidateName[255];
+    for(int i = 0; i < 2; i++){
+        fgets(candidateName, 255, pUserrr); //reads 2nd line in file
+    }
+    fclose(pUserrr);
+    //create array of candidates
+    FILE *pCanddid = fopen("candidate.txt", "r"); //opens candidate file to read
+    FILE *pVottet = fopen("vote.txt", "r"); //creates votes file if it doesnt exist
+    int candidateNumber = 0;
+    char temp[255];
+    char candidateNames[255][255]; //double array to store candidate names
+    int votes[255]; //array to store vote numbers
+    while(fgets(temp, 255, pCanddid)){
+        candidateNumber++;
+    }
+    rewind(pCanddid);
+    int candidatePlace = 0;
+    for(int i = 0; i < candidateNumber; i++){
+        fgets(candidateNames[i], 255, pCanddid);
+        candidateNames[i][strlen(candidateNames[i])-1] = '\0'; //removes whitespace at end of name
+        if(strncmp(candidateNames[i], candidateName, strlen(candidateName)) == 0){ //they are the same
+            candidatePlace = i;
+        }
+        fgets(temp, 255, pVottet);
+        votes[i] = atoi(temp); //converts the string to an integer
+    }
+    fclose(pCanddid);
+    fclose(pVottet);
+    votes[candidatePlace] = votes[candidatePlace] - 1; //removes vote
+    FILE *pfinalvotefile = fopen("vote.txt", "w"); //overwrites
+    for(int i = 0; i < candidateNumber; i++){
+        fprintf(pfinalvotefile, "%d\n", votes[i]);
+    }
+    fclose(pfinalvotefile);
+    //change user file
+    FILE *pFinalUserFile = fopen(fileName, "w"); //overwrites
+    fprintf(pFinalUserFile, "%s\nno", password);
+    fclose(pFinalUserFile);
+    exit(0);
 }
 
 void removeCandidate(char userName[255], char password[255]){
@@ -262,25 +307,53 @@ void removeCandidate(char userName[255], char password[255]){
     FILE *pUser = fopen(fileName, "w"); //rerwites file
     fprintf(pUser, "%s\nno", password);
     fclose(pUser);
-    char candidates[255][255]; //an array to store candidate names
-    FILE *pCandid = fopen("candidate.txt", "a+");
-    char candidateName[255];
-    int i = 0; 
-    while (fgets(candidateName, 255, pCandid)){
-        if(strncmp(candidateName, userName, strlen(userName)) != 0){ //if name on file is not user name
-            for(int k = 0; k < strlen(candidateName); k++){
-                strcpy(candidates[i], candidateName); //copy name on file to array
-            }
-            i++; //i is the amount of names
+
+    FILE *pCandid = fopen("candidate.txt", "r");
+    FILE *pVote = fopen("vote.txt", "r");
+    int candidateNumber = 0;
+    char temp[255];
+    char throwaway;
+    char temp2[255];
+    char candidateNames[255][255]; //double array to store candidate names
+    int votes[255]; //array to store vote numbers
+    while(fgets(temp, 255, pCandid)){
+        candidateNumber++;
+    }
+    rewind(pCandid);
+    int i = 0;
+    while (i < candidateNumber - 1){
+        fgets(temp, 255, pCandid);
+        fgets(temp2, 255, pVote);
+        if (strncmp(temp, userName, strlen(userName)) != 0){ //if name read is not the username
+            strcpy(candidateNames[i], temp);
+            candidateNames[i][strlen(candidateNames[i])-1] = '\0'; //removes whitespace at end of name
+            votes[i] = atoi(temp2); //converts the string to an integer
+            i++;
         }
     }
     fclose(pCandid);
-    candidates[i+1][0] = '\0'; //null termiantor
-    recreateCandidatelist(i, candidates);
+    fclose(pVote);
+    candidateNames[i+1][0] = '\0';
+    recreateCandidatelist(i, candidateNames, votes);
+    // FILE *pCandid = fopen("candidate.txt", "r");
+    // char candidateName[255];
+    // int i = 0; 
+    // while (fgets(candidateName, 255, pCandid)){
+    //     if(strncmp(candidateName, userName, strlen(userName)) != 0){ //if name on file is not user name
+    //         for(int k = 0; k < strlen(candidateName); k++){
+    //             strcpy(candidates[i], candidateName); //copy name on file to array
+    //         }
+    //         i++; //i is the amount of names
+    //     }
+    // }
+    // fclose(pCandid);
+    // candidates[i+1][0] = '\0'; //null termiantor
+    // recreateCandidatelist(i, candidates);
 }
 
-void recreateCandidatelist(int i, char candidates[255][255]){
+void recreateCandidatelist(int i, char candidates[255][255], int votes[255]){
     FILE *pCandida = fopen("candidate.txt", "w"); //overwrites the old candidate file
+    FILE *pVotet = fopen("vote.txt", "w"); //overwrites vote file
     // if (pCandida == NULL){ //wtf if i do this then segmentatoin error????
     //      printf("Error!\n");
     //      exit(0);
@@ -288,11 +361,12 @@ void recreateCandidatelist(int i, char candidates[255][255]){
     int j = 0;
        //while(isspace(candidates[j]) != 0){ //if it is not blank
         while(strcmp(candidates[j], " ") != 0 && candidates[j][0] != '\0'){ //detects blankspace which solved a bunch of issues
-        fprintf(pCandida, "%s", candidates[j]);
-        printf("%s", candidates[j]);
+        fprintf(pCandida, "%s\n", candidates[j]);
+        fprintf(pVotet, "%d\n", votes[j]);
         j++;
        }
     fclose(pCandida);
+    fclose(pVotet);
     printf("\nYou have succesfully removed yourself from candidateship!\n");
     exit(0);
 }
